@@ -55,9 +55,9 @@ public class Main {
         TcpServer server = new TcpServer(3333);
         server.start();
 
-        for (Proiettore p : TcpServer.mappaProiettori.values()) {
-            p.proceduraOUTPUT_CH();
-        }
+//        for (Proiettore p : TcpServer.mappaProiettori.values()) {
+//            p.proceduraOUTPUT_CH();
+//        }
 
         try {
             Thread.sleep(1000000); // 10 secondi
@@ -141,6 +141,71 @@ public class Main {
                     }
                 }
             });
+
+            serverHttp.createContext("/api/procedura/taratura", exchange -> {
+                if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                    exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                    exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "POST, OPTIONS");
+                    exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+                    exchange.sendResponseHeaders(204, -1);
+                    exchange.close();
+                    return;
+                }
+                if ("POST".equals(exchange.getRequestMethod())) {
+                    new Thread(() -> {
+                        TcpServer.mappaProiettori.values().forEach(proiettore -> {
+                            try {
+                                proiettore.proceduraTaratura();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }).start();
+
+                    String response = "Procedura Taratura avviata";
+                    exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                    exchange.sendResponseHeaders(200, response.getBytes().length);
+                    exchange.getResponseBody().write(response.getBytes());
+                    exchange.getResponseBody().close();
+                } else {
+                    exchange.sendResponseHeaders(405, 0);
+                    exchange.getResponseBody().close();
+                }
+            });
+
+
+            serverHttp.createContext("/api/procedura/outputch", exchange -> {
+                if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                    exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                    exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "POST, OPTIONS");
+                    exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+                    exchange.sendResponseHeaders(204, -1);
+                    exchange.close();
+                    return;
+                }
+                if ("POST".equals(exchange.getRequestMethod())) {
+                    new Thread(() -> {
+                        TcpServer.mappaProiettori.values().forEach(proiettore -> {
+                            try {
+                                proiettore.proceduraOUTPUT_CH();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }).start();
+
+                    String response = "Procedura OUTPUT_CH avviata";
+                    exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                    exchange.sendResponseHeaders(200, response.getBytes().length);
+                    exchange.getResponseBody().write(response.getBytes());
+                    exchange.getResponseBody().close();
+                } else {
+                    exchange.sendResponseHeaders(405, 0);
+                    exchange.getResponseBody().close();
+                }
+            });
+
+
 
 
             new Thread(() -> {
